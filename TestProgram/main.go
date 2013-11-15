@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/msiebuhr/go-tag-test"
 	"fmt"
+	"github.com/msiebuhr/go-tag-test"
 )
 
 func main() {
