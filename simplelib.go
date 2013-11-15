@@ -3,7 +3,7 @@ package TagTest
 import "fmt"
 
 func Tag() string {
-	return "Second commit."
+	return "Tagged v0.0.0"
 }
 
 func init() {
