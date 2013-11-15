@@ -1,12 +1,12 @@
 go-tag-test
 ===========
 
-Testing repository for versionedn `go get` imports.
+Testing repository for versioned `go get` imports.
 
 Patch go
 --------
 
-Apply the inlucded patch on a checkout of the go source-code, build and run!
+Apply the included patch on a checkout of the go source-code, build and run!
 
 In particular, this allows `@<branch>` or `@<tag>` to Github checkouts, ex:
 
@@ -16,10 +16,11 @@ In particular, this allows `@<branch>` or `@<tag>` to Github checkouts, ex:
 Will give you two checkouts of this repository at the commits corresponding to
 the given tags.
 
-If the tag is removed and placed somewhere else, `go get -u` will fix it.
+If the tag is placed somewhere else, `go get -u` will fix it (i.e. have
+`stable` or `builds-ok`-tags from CI systems).
 
-TestProgram
------------
+Test program
+------------
 
 A quick test-program is included, which imports this library (without any tags)
 and prints whatever `TagTest.Tag()` returns.
@@ -37,4 +38,7 @@ Tonnes!
  - Source from any other place than Github.
  - You can include different versions of the program without error, which will
    lead to all sorts of corner-cases.
+ - Simplistic (I tried to make the patch as minimal as possible, so a lot of
+   other stuff is probably broken rather badly.)
+ - ...
 
