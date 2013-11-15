@@ -1,0 +1,114 @@
+diff -r 6ad0ec54cf2d src/cmd/go/get.go
+--- a/src/cmd/go/get.go	Mon Nov 11 12:09:24 2013 +1100
++++ b/src/cmd/go/get.go	Fri Nov 15 11:50:35 2013 +0100
+@@ -12,7 +12,6 @@
+ 	"os"
+ 	"path/filepath"
+ 	"regexp"
+-	"runtime"
+ 	"strconv"
+ 	"strings"
+ )
+@@ -252,9 +251,9 @@
+ // to make the first copy of or update a copy of the given package.
+ func downloadPackage(p *Package) error {
+ 	var (
+-		vcs            *vcsCmd
+-		repo, rootPath string
+-		err            error
++		vcs                       *vcsCmd
++		repo, rootPath, commitish string
++		err                       error
+ 	)
+ 	if p.build.SrcRoot != "" {
+ 		// Directory exists.  Look for checkout along path to src.
+@@ -270,7 +269,7 @@
+ 		if err != nil {
+ 			return err
+ 		}
+-		vcs, repo, rootPath = rr.vcs, rr.repo, rr.root
++		vcs, repo, rootPath, commitish = rr.vcs, rr.repo, rr.root, rr.commitish
+ 	}
+ 
+ 	if p.build.SrcRoot == "" {
+@@ -335,16 +334,10 @@
+ 	}
+ 
+ 	// Select and sync to appropriate version of the repository.
+-	tags, err := vcs.tags(root)
+-	if err != nil {
+-		return err
+-	}
+-	vers := runtime.Version()
+-	if i := strings.Index(vers, " "); i >= 0 {
+-		vers = vers[:i]
+-	}
+-	if err := vcs.tagSync(root, selectTag(vers, tags)); err != nil {
+-		return err
++	if commitish != "" {
++		if err := vcs.tagSync(root, commitish); err != nil {
++			return err
++		}
+ 	}
+ 
+ 	return nil
+diff -r 6ad0ec54cf2d src/cmd/go/vcs.go
+--- a/src/cmd/go/vcs.go	Mon Nov 11 12:09:24 2013 +1100
++++ b/src/cmd/go/vcs.go	Fri Nov 15 11:50:35 2013 +0100
+@@ -305,6 +305,8 @@
+ 	check  func(match map[string]string) error // additional checks
+ 	ping   bool                                // ping for scheme to use to download repo
+ 
++	commitish string // What branch/tag/commit to use
++
+ 	regexp *regexp.Regexp // cached compiled form of re
+ }
+ 
+@@ -352,6 +354,9 @@
+ 	// root is the import path corresponding to the root of the
+ 	// repository
+ 	root string
++
++	// What tag/commit/branch to use
++	commitish string
+ }
+ 
+ // repoRootForImportPath analyzes importPath to determine the
+@@ -407,8 +412,9 @@
+ 
+ 		// Build map of named subexpression matches for expand.
+ 		match := map[string]string{
+-			"prefix": srv.prefix,
+-			"import": importPath,
++			"prefix":    srv.prefix,
++			"import":    importPath,
++			"commitish": "",
+ 		}
+ 		for i, name := range srv.regexp.SubexpNames() {
+ 			if name != "" && match[name] == "" {
+@@ -443,9 +449,10 @@
+ 			}
+ 		}
+ 		rr := &repoRoot{
+-			vcs:  vcs,
+-			repo: match["repo"],
+-			root: match["root"],
++			vcs:       vcs,
++			repo:      match["repo"],
++			root:      match["root"],
++			commitish: match["commitish"],
+ 		}
+ 		return rr, nil
+ 	}
+@@ -584,9 +591,9 @@
+ 	// Github
+ 	{
+ 		prefix: "github.com/",
+-		re:     `^(?P<root>github\.com/[A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+)(/[A-Za-z0-9_.\-]+)*$`,
++		re:     `^(?P<root>(?P<repo>github\.com/[A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+)(@(?P<commitish>[A-Za-z0-9_.\-]+))?)(/[A-Za-z0-9_.\-]+)*$`,
+ 		vcs:    "git",
+-		repo:   "https://{root}",
++		repo:   "https://{repo}",
+ 		check:  noVCSSuffix,
+ 	},
+ 
